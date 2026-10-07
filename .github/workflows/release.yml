@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Test and pack, but do not create the release or publish to npm
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - id: plan
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(jq -r .version package.json)
+          case "$version" in
+            ''|*[!0-9A-Za-z.+-]*) echo "::error::Could not read the version from package.json (got '$version')."; exit 1 ;;
+          esac
+          if [ "$REF_TYPE" = tag ] && [ "$REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $REF_NAME does not match version $version. Tag v$version instead, or bump the version."
+            exit 1
+          fi
+          dry_run=false
+          if [ "$DRY_RUN" = true ]; then dry_run=true; fi
+          if [ "$dry_run" = false ] && [ "$REF_TYPE" != tag ]; then
+            echo "::error::A real release must run from the v$version tag. Push the tag, or run with dry_run."
+            exit 1
+          fi
+          npm_tag=latest
+          prerelease=false
+          case "$version" in *-*) npm_tag=next; prerelease=true ;; esac
+          {
+            echo "version=$version"
+            echo "dry_run=$dry_run"
+            echo "npm_tag=$npm_tag"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+      - run: npm test
+      - run: npm pack
+      - name: Check the npm package
+        env:
+          NPM_TAG: ${{ steps.plan.outputs.npm_tag }}
+        run: npm publish --dry-run --access public --tag "$NPM_TAG"
+      - name: Create GitHub release
+        if: steps.plan.outputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.plan.outputs.version }}
+          PRERELEASE: ${{ steps.plan.outputs.prerelease }}
+        run: |
+          tag="v$VERSION"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists."
+            exit 0
+          fi
+          set -- --verify-tag --title "commission-ai-computer $VERSION" --generate-notes
+          if [ "$PRERELEASE" = true ]; then set -- "$@" --prerelease; fi
+          gh release create "$tag" "$@" patrick-lai-commission-ai-computer-"$VERSION".tgz
+      - name: Publish to npm
+        if: steps.plan.outputs.dry_run != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.plan.outputs.version }}
+          NPM_TAG: ${{ steps.plan.outputs.npm_tag }}
+        run: |
+          published=$(npm view "@patrick-lai/commission-ai-computer@$VERSION" version 2>/dev/null || true)
+          if [ "$published" = "$VERSION" ]; then
+            echo "@patrick-lai/commission-ai-computer@$VERSION is already on npm."
+            exit 0
+          fi
+          npm publish --provenance --access public --tag "$NPM_TAG"

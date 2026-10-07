@@ -1,0 +1,28 @@
+{
+  "name": "@patrick-lai/commission-ai-computer",
+  "version": "0.1.0",
+  "description": "The CommissionAI Mac app control contract: operations, limits, tool schemas, shared test vectors and a reference validator.",
+  "type": "module",
+  "main": "index.mjs",
+  "files": [
+    "contract",
+    "index.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "fixtures": "node scripts/generate-fixtures.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patrick-lai/commission-ai-computer.git"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

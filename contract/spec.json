@@ -1,0 +1,23 @@
+{
+  "protocol": 1,
+  "operations": ["status", "apps", "windows", "select", "snapshot", "screenshot", "click", "hover", "drag", "scroll", "type", "key", "grok_bot_connection", "stop"],
+  "input_operations": ["click", "hover", "drag", "scroll", "type", "key", "grok_bot_connection"],
+  "buttons": ["left", "right", "middle"],
+  "grok_bot_bundle_id": "com.anysphere.sand",
+  "limits": {
+    "observation_bytes": 128,
+    "reference_bytes": 128,
+    "bundle_id_bytes": 256,
+    "key_bytes": 128,
+    "text_bytes": 16384,
+    "identity_bytes": 128,
+    "click_count": { "min": 1, "max": 2 },
+    "screenshot_dimension": { "min": 320, "max": 2048 },
+    "scroll_distance": 20000,
+    "window_id": { "min": 1, "max": 4294967295 },
+    "receipts": 128,
+    "call_timeout_ms": 15000,
+    "command_bytes": 262144,
+    "message_bytes": 8388608
+  }
+}
