@@ -64,9 +64,21 @@
       "host": true
     },
     {
-      "name": "unknown fields are refused by the daemon only",
+      "name": "operations without arguments ignore extra fields",
       "operation": {
         "kind": "status",
+        "extra": 1
+      },
+      "target": "default",
+      "daemon": true,
+      "host": true,
+      "note": "serde does not apply deny_unknown_fields to unit operations of a tagged enum."
+    },
+    {
+      "name": "operations with arguments refuse extra fields in the daemon only",
+      "operation": {
+        "kind": "windows",
+        "bundle_id": "a.b",
         "extra": 1
       },
       "target": "default",

@@ -36,7 +36,8 @@ function parses(operation) {
   const shape = SHAPES[operation.kind];
   if (shape === undefined) return false;
   const allowed = new Set(["kind", ...Object.keys(shape.required), ...Object.keys(shape.optional)]);
-  if (Object.keys(operation).some((key) => !allowed.has(key))) return false;
+  const takesArguments = Object.keys(shape.required).length + Object.keys(shape.optional).length > 0;
+  if (takesArguments && Object.keys(operation).some((key) => !allowed.has(key))) return false;
   for (const [key, check] of Object.entries(shape.required)) {
     if (!check(operation[key])) return false;
   }

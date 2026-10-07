@@ -17,7 +17,8 @@ const observation = token(128);
 const accent = "é";
 
 for (const kind of ["status", "apps", "snapshot", "stop"]) add(`${kind} needs no arguments`, { kind }, true, true);
-add("unknown fields are refused by the daemon only", { kind: "status", extra: 1 }, false, true, "default", "The daemon denies unknown fields; the host ignores them.");
+add("operations without arguments ignore extra fields", { kind: "status", extra: 1 }, true, true, "default", "serde does not apply deny_unknown_fields to unit operations of a tagged enum.");
+add("operations with arguments refuse extra fields in the daemon only", { kind: "windows", bundle_id: "a.b", extra: 1 }, false, true, "default", "The daemon denies unknown fields; the host ignores them.");
 add("unknown kinds are refused", { kind: "teleport" }, false, false);
 
 add("windows accepts a bundle id", { kind: "windows", bundle_id: "com.apple.TextEdit" }, true, true);
